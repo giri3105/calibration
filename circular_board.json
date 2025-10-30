@@ -1,0 +1,38 @@
+{
+    "mutual_construction_groups": [
+        ["aa69a352-42fe-11ef-bb9e-4794647c59ff", "609b29ee-42fe-11ef-a343-bf0f5f79fe83"]
+    ],
+    "object_spaces": {
+        "609b29ee-42fe-11ef-a343-bf0f5f79fe83": {
+            "descriptor": {
+                "variances": [1e-8, 1e-8, 1e-8]
+            },
+            "detector": {
+                "markerboard": {
+                    "checker_length": 0.1,
+                    "corner_height": 8,
+                    "corner_width": 8,
+                    "marker_dictionary": "Aruco5x5_1000",
+                    "marker_id_offset": 0,
+                    "marker_length": 0.075
+                }
+            }
+        },
+        "aa69a352-42fe-11ef-bb9e-4794647c59ff": {
+            "descriptor": {
+                "variances": [1e-8, 1e-8, 1e-8]
+            },
+            "detector": {
+                "circle": {
+                    "detect_interior_points": true,
+                    "radius": 0.456,
+                    "reflective_tape_width": 0.05,
+                    "x_offset": 0.364,
+                    "y_offset": 0.364,
+                    "z_offset": 0
+                }
+            }
+        }
+    },
+    "spatial_constraints": []
+}
