@@ -56,7 +56,7 @@ def main():
     # getopt.getopt returns (opts, args) where opts is a list of (option, value).
     # Convert to a dict so we can use setdefault like the original sample expects.
     args = dict(opts)
-    args.setdefault('--debug', './output/')
+    args.setdefault('--debug', './output_2/')
     args.setdefault('-w', 8)                     # Changed from 4
     args.setdefault('-h', 8)                     # Changed from 6
     args.setdefault('-t', 'charucoboard')        # Changed from 'chessboard'
