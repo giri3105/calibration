@@ -14,7 +14,7 @@ SQUARE_LENGTH = 0.1  # In meters
 MARKER_LENGTH = 0.075 # In meters
 
 # !!! Change this to the path of your image !!!
-IMAGE_PATH = "/home/giri/calibration/images/frame_0011.png" 
+IMAGE_PATH = "/home/giri/calibration/Sharpened (Unsharp Mask).png" 
 
 # --- 2. Load the Image ---
 
@@ -45,7 +45,7 @@ board = aruco.CharucoBoard(
 
 # Create detector parameters for the ArUco markers
 aruco_params = aruco.DetectorParameters() 
-aruco_params.cornerRefinementMethod = aruco.CORNER_REFINE_NONE
+# aruco_params.cornerRefinementMethod = aruco.CORNER_REFINE_NONE
 # Create parameters for the ChArUco board detector
 charuco_params = aruco.CharucoParameters()
 # You can add logic like charuco_params.tryRefineMarkers = True

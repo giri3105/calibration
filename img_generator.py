@@ -27,12 +27,12 @@ def main():
     # NEW: Add start and end time arguments
     parser.add_argument("--start_sec", 
                         type=float, 
-                        default=26, 
+                        default=0, 
                         help="Start time in seconds (e.g., 25.0 for 0:25).")
                         
     parser.add_argument("--end_sec", 
                         type=float, 
-                        default=170, 
+                        default=None, 
                         help="End time in seconds (e.g., 160.0 for 2:40).")
 
     args = parser.parse_args()
