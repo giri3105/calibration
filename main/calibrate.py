@@ -31,53 +31,76 @@ from __future__ import print_function
 import numpy as np
 import cv2 as cv
 
+
 # built-in modules
 import os
-
-# small helper to split filename into (path, name, ext).
-# Original samples import this from a `common` module; define it here
-# to avoid the external dependency.
 def splitfn(fn):
-    """Split a filename into (path, name, ext).
-
-    Example: '/tmp/img.png' -> ('/tmp', 'img', '.png')
-    """
+    """Split filename into (path, name, ext). Example: '/tmp/img.png' -> ('/tmp','img','.png')"""
     path, filename = os.path.split(fn)
     name, ext = os.path.splitext(filename)
     return path, name, ext
+
+def save_calibration_results(filename, board_width, board_height, square_size, camera_matrix, dist_coefs, rvecs, tvecs, rms):
+    """Saves all calibration results to a YAML file for OpenCV."""
+    
+    print(f"\nSaving calibration results to {filename}...")
+    
+    # Combine rvecs and tvecs into a single N x 6 matrix
+    extrinsics = []
+    for rvec, tvec in zip(rvecs, tvecs):
+        # Squeeze from (3,1) to (3,) and stack
+        ext_row = np.hstack((rvec.squeeze(), tvec.squeeze()))
+        extrinsics.append(ext_row)
+    # Convert list of arrays to a single N x 6 matrix
+    extrinsics_matrix = np.array(extrinsics)
+
+    # Open the file storage
+    fs = cv.FileStorage(filename, cv.FILE_STORAGE_WRITE)
+    if not fs.isOpened():
+        print(f"Error: Could not open {filename} for writing.")
+        return
+
+    # Write the data in the format the plotting script expects
+    fs.write("board_width", board_width)
+    fs.write("board_height", board_height)
+    fs.write("square_size", square_size)
+    fs.write("camera_matrix", camera_matrix)
+    fs.write("extrinsic_parameters", extrinsics_matrix)
+    
+    # Also save the other useful data
+    fs.write("rms_error", rms)
+    fs.write("distortion_coefficients", dist_coefs)
+
+    # Release the file
+    fs.release()
+    print("Calibration results saved.")
+
 
 def main():
     import sys
     import getopt
     from glob import glob
 
-    opts, img_names = getopt.getopt(sys.argv[1:], 'w:h:t:', ['debug=','square_size=', 'marker_size=',
+    args, img_names = getopt.getopt(sys.argv[1:], 'w:h:t:', ['debug=','square_size=', 'marker_size=',
                                                       'aruco_dict=', 'threads=', ])
-    # getopt.getopt returns (opts, args) where opts is a list of (option, value).
-    # Convert to a dict so we can use setdefault like the original sample expects.
-    args = dict(opts)
-    args.setdefault('--debug', './output_2/')
-    args.setdefault('-w', 8)                     # Changed from 4
-    args.setdefault('-h', 8)                     # Changed from 6
-    args.setdefault('-t', 'charucoboard')        # Changed from 'chessboard'
-    args.setdefault('--square_size', 0.1)        # Changed from 10
-    args.setdefault('--marker_size', 0.075)      # Changed from 5
-    args.setdefault('--aruco_dict', 'DICT_5X5_1000') # Changed from 'DICT_4X4_50'
+    args = dict(args)
+    args.setdefault('--debug', './output/')
+    args.setdefault('-w', 4)
+    args.setdefault('-h', 6)
+    args.setdefault('-t', 'chessboard')
+    args.setdefault('--square_size', 10)
+    args.setdefault('--marker_size', 5)
+    args.setdefault('--aruco_dict', 'DICT_4X4_50')
     args.setdefault('--threads', 4)
 
     if not img_names:
-        # --- MODIFIED DEFAULT IMAGE MASK ---
-        img_mask = 'images/*.png'  # Assumes .png files in a folder named 'images'
-        print(f"No image mask provided. Defaulting to: {img_mask}")
+        img_mask = '../data/left??.jpg'  # default
         img_names = glob(img_mask)
-        if not img_names:
-            print(f"Error: No images found matching the default mask '{img_mask}'.")
-            print("Please specify the correct path, e.g.,: python calibrate.py 'my_folder/*.jpg'")
-            return
 
     debug_dir = args.get('--debug')
     if debug_dir and not os.path.isdir(debug_dir):
         os.mkdir(debug_dir)
+
     height = int(args.get('-h'))
     width = int(args.get('-w'))
     pattern_type = str(args.get('-t'))
@@ -145,12 +168,11 @@ def main():
                 frame_obj_points = pattern_points
         elif pattern_type == 'charucoboard':
             corners, charucoIds, _, _ = charuco_detector.detectBoard(img)
-            if corners is not None and len(corners) > 0:
+            if (len(corners) > 0):
                 frame_obj_points, frame_img_points = board.matchImagePoints(corners, charucoIds)
-                if frame_img_points is not None and len(frame_img_points) > 4:
-                    found = True
-                else:
-                    found = False
+                found = True
+            else:
+                found = False
         else:
             print("unknown pattern type", pattern_type)
             return None
@@ -160,8 +182,7 @@ def main():
             if pattern_type == 'chessboard':
                 cv.drawChessboardCorners(vis, pattern_size, corners, found)
             elif pattern_type == 'charucoboard':
-                if found:
-                    cv.aruco.drawDetectedCornersCharuco(vis, corners, charucoIds=charucoIds)
+                cv.aruco.drawDetectedCornersCharuco(vis, corners, charucoIds=charucoIds)
             _path, name, _ext = splitfn(fn)
             outfile = os.path.join(debug_dir, name + '_board.png')
             cv.imwrite(outfile, vis)
@@ -194,6 +215,12 @@ def main():
     print("camera matrix:\n", camera_matrix)
     print("distortion coefficients: ", dist_coefs.ravel())
 
+    output_yml = os.path.join(debug_dir, 'calibration_results.yml') if debug_dir else 'calibration_results.yml'
+    board_w = int(args.get('-w'))
+    board_h = int(args.get('-h'))
+    sq_size = float(args.get('--square_size'))
+    save_calibration_results(output_yml, board_w, board_h, sq_size, camera_matrix, dist_coefs, _rvecs, _tvecs, rms)
+    
     # undistort the image with the calibration
     print('')
     for fn in img_names if debug_dir else []:
